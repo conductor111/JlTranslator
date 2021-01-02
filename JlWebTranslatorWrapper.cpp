@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QWebEnginePage>
+#include <QDebug>
 
 #include "JlWebTranslatorWrapper.h"
 

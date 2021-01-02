@@ -1,0 +1,15 @@
+*.VC.db
+*.VC.VC.opendb
+*.vcxproj.user
+*.user
+GeneratedFiles/
+Default/
+win32/
+Debug/
+Release/
+*.vs
+ipch/
+*.aps
+build/
+build_root/
+TestOutput
