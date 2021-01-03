@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.7.0)
 
+if (WIN32 AND NOT EXISTS "$ENV{QT_DIR}")
+  message(FATAL_ERROR "The value of QT_DIR environment variable is invalid.")  
+endif ()
+
 project(JlTranslator VERSION 0.1)
 
 set(CMAKE_BINARY_DIR "../build")

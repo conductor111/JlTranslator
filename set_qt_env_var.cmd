@@ -1,0 +1,1 @@
+SET QT_DIR=D:\Qt_VS2017\5.12.10\x64\Qt5.12.10\5.12\qtbase
