@@ -13,6 +13,7 @@ qt5_wrap_ui(uifiles MainWindow.ui QSettingsDlg.ui)
 
 add_executable(${PROJECT_NAME} WIN32
     main.cpp
+    LangsAvailable.cpp
     JlWebTranslatorWrapper.cpp
     JlDtdFileProcessor.cpp
     QSettingsDlg.cpp

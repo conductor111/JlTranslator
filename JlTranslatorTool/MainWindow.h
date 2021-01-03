@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSettings>
 
 #include "JlWebTranslatorWrapper.h"
 
@@ -19,8 +20,18 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QSettings m_settings;
+
+    static inline const QString c_inputFilePathKey = "InputFilePath";
+    static inline const QString c_outputDirPathKey = "OutputDirPath";
 
     JlWebTranslatorWrapper m_jlWebTranslatorWrapper;
+
+    void initSlots();
+    void initSlotsInline();
+    void initControls();
+    void onSelectInputFile();
+    void onSelectOutputDir();
 };
 
 #endif // MAINWINDOW_H
