@@ -28,6 +28,7 @@ private:
     static inline const QString c_outputLangsDelimiter = ":";
     static inline const QString c_inputLangKey = "Langs/Input";
     static inline const QString c_outputLangsKey = "Langs/Output";
+    static inline const QString c_outputLangPathAliasesGroup = "OutputLangPathAliases/";
 
     void initSlots();
     void initSlotsInline();

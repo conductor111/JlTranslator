@@ -21,6 +21,14 @@ QSettingsDlg::QSettingsDlg(QSettings &settings, QWidget *parent)
     {
         m_settings.setValue(c_inputLangKey, "en");
         m_settings.setValue(c_outputLangsKey, "it");
+
+        m_settings.beginGroup(c_outputLangPathAliasesGroup);
+        m_settings.setValue("en", "en-US");
+        m_settings.setValue("es", "es-ES");
+        m_settings.setValue("id", "id-ID");
+        m_settings.setValue("pt", "pt-BR");
+        m_settings.setValue("sv", "sv-SE");
+        m_settings.endGroup();
     }
 
     initControls();
