@@ -56,7 +56,7 @@ QVariant JlWebTranslatorWrapperPrivate::runJavaScript(QWebEnginePage *page, cons
     page->runJavaScript(script, [&](const QVariant &v)
     {
         retValue = v;
-        qDebug() << v.toString();
+        //qDebug() << v.toString();
         answered = true;
     });
 
