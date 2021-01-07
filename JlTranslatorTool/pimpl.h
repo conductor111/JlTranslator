@@ -1,10 +1,12 @@
 #pragma once
 
-template<typename T>
+#include <memory>
+
+template<typename T, typename... A>
 class pimpl
 {
 public:
-    pimpl() : d(new T) {}
+    pimpl(A... a) : d{new T(a...)} {}
 protected:
     std::unique_ptr<T> d;
 };
