@@ -2,18 +2,27 @@
 #define JLDTDFILEPROCESSOR_H
 
 #include <memory>
+#include <map>
+#include <functional>
 
 #include <QString>
+#include <QColor>
 
 #include "pimpl.h"
 
-class JlDtdFileProcessor : public pimpl<class JlDtdFileProcessorPrivate>
+typedef std::function<void(const QString& text, const QColor &textColor, int fontWeight)> log_cb_t;
+
+class JlDtdFileProcessor : public pimpl<class JlDtdFileProcessorPrivate, log_cb_t>
 {
-public:
-    JlDtdFileProcessor();
+public:    
+    JlDtdFileProcessor(const log_cb_t &log_cb);
     ~JlDtdFileProcessor();
 
-    void processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang = "en");
+    bool isProcessing() const;
+    typedef std::map<QString, QString> StrStrMap;
+    void processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang, const StrStrMap &outputLangPathAliases);
+    void breakProcess();
+    bool isProcessBroken() const;
 };
 
 #endif // JLDTDFILEPROCESSOR_H

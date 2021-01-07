@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QSettings>
 
-#include "JlWebTranslatorWrapper.h"
+#include "JlDtdFileProcessor.h"
 
 namespace Ui {
 class MainWindow;
@@ -25,13 +25,20 @@ private:
     static inline const QString c_inputFilePathKey = "InputFilePath";
     static inline const QString c_outputDirPathKey = "OutputDirPath";
 
-    JlWebTranslatorWrapper m_jlWebTranslatorWrapper;
+    JlDtdFileProcessor m_jlDtdFileProcessor;
+
+    virtual void closeEvent(QCloseEvent *event);
 
     void initSlots();
     void initSlotsInline();
     void initControls();
     void onSelectInputFile();
     void onSelectOutputDir();
+    void onProcess_Break();
+
+    bool prepareDtdFileProcessingParams(QString &dtdFilePath, QString &dtdOutputDirPath, QStringList &outputLangs, QString &inputLang, JlDtdFileProcessor::StrStrMap &outputLangPathAliases);
+
+    void log(const QString& text, const QColor &textColor, int fontWeight);
 };
 
 #endif // MAINWINDOW_H

@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
+#include <QMessageBox>
+#include <QApplication>
 
 #include "StringUtil.h"
 #include "JlWebTranslatorWrapper.h"
@@ -25,6 +27,8 @@ QString addEndSlashIfNeed(const QString& pathDir)
 // JlDtdFileProcessorPrivate
 class JlDtdFileProcessorPrivate
 {
+    static inline QString c_entityErrorValue = "### CANNOT BE TRANSLATED AUTOMATICALLY ###";
+
     struct TEntity
     {
         bool rawData;
@@ -34,15 +38,23 @@ class JlDtdFileProcessorPrivate
     typedef std::vector<TEntity> EntityCollection;
 
     JlWebTranslatorWrapper m_webTranslatorWrapper;
+    bool m_isProcessing = false;
+    bool m_needBreak = false;
+    bool m_translateError = false;
+    log_cb_t log;
 
-    void processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang);
+    void processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLangconst, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases);
 
     static bool isValidStartOfName(const QString name);
     bool parseDocType(const QString &data, EntityCollection &entityCollection);
-    void translateDtdFile(const EntityCollection &entityCollection, const QString &dtdOutputDirPath, const QString &dtdFileName, const QString &outputLang, const QString &inputLang);
+    void translateDtdFile(const EntityCollection &entityCollection, const QString &dtdOutputDirPath, const QString &dtdFileName, const QString &outputLang, const QString &inputLang, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases);
     void writeEntity(QTextStream &stream, const QString &id, const QString &value);
+    const QString& outputLangPath(const QString& outputLang, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases);
 
     friend class JlDtdFileProcessor;
+
+public:
+    JlDtdFileProcessorPrivate(const log_cb_t &log_cb) : log{ log_cb } {}
 };
 
 bool JlDtdFileProcessorPrivate::isValidStartOfName(const QString name)
@@ -96,36 +108,92 @@ void JlDtdFileProcessorPrivate::writeEntity(QTextStream &stream, const QString &
     stream << QString("<!ENTITY %1 \"%2\">\n").arg(id).arg(value);
 }
 
-void JlDtdFileProcessorPrivate::translateDtdFile(const EntityCollection &entityCollection, const QString &dtdOutputDirPath, const QString &dtdFileName, const QString &outputLang, const QString &inputLang)
+const QString& JlDtdFileProcessorPrivate::outputLangPath(const QString& outputLang, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases)
+{
+    auto it = outputLangPathAliases.find(outputLang);
+    if (it != outputLangPathAliases.end())
+    {
+        return it->second;
+    }
+
+    return outputLang;
+}
+
+void JlDtdFileProcessorPrivate::translateDtdFile(const EntityCollection &entityCollection, const QString &dtdOutputDirPath, const QString &dtdFileName, const QString &outputLang, const QString &inputLang, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases)
 {
     assert(QFileInfo::exists(dtdOutputDirPath) && !outputLang.isEmpty() && !inputLang.isEmpty());
 
-    QString outputDir = addEndSlashIfNeed(dtdOutputDirPath) + outputLang;
+    QString outputDir = addEndSlashIfNeed(dtdOutputDirPath) + outputLangPath(outputLang, outputLangPathAliases);
     if (!QFileInfo::exists(outputDir))
     {
         QDir().mkpath(outputDir);
     }
 
-    assert(!QFile::exists(addEndSlashIfNeed(outputDir) + dtdFileName));
+    QString dtdFileFullPath = addEndSlashIfNeed(outputDir) + dtdFileName;
+    if (QFile::exists(dtdFileFullPath))
+    {
+        auto res = QMessageBox::question(qApp->activeWindow(), QObject::tr("Question"),
+            QObject::tr("File \"") + dtdFileFullPath + QObject::tr("\" already exists. Overwrite it?"),
+            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        if (res == QMessageBox::No || res == QMessageBox::Cancel)
+        {
+            m_needBreak = res == QMessageBox::Cancel;
+            log(m_needBreak ? QObject::tr("Canceled by user\n") :
+                (QObject::tr("File \"") + dtdFileFullPath + QObject::tr("\" has been skipped.\n")), Qt::GlobalColor::black, QFont::Bold);
+            return;
+        }
 
-    QFile dtdFile(addEndSlashIfNeed(outputDir) + dtdFileName);
+        if (!QFileInfo(dtdFileFullPath).permission(QFile::WriteUser))
+        {
+            auto res = QMessageBox::warning(qApp->activeWindow(), QObject::tr("Question"),
+                QObject::tr("No permission to overwrite file \"") + dtdFileFullPath + QObject::tr("\". Skip it?"),
+                QMessageBox::Yes | QMessageBox::Cancel);
+            m_needBreak = res == QMessageBox::Cancel;
+            log(m_needBreak ? QObject::tr("Canceled by user\n") :
+                (QObject::tr("File \"") + dtdFileFullPath + QObject::tr("\" has been skipped.\n")), Qt::GlobalColor::black, QFont::Bold);
+            return;
+        }
+    }
+
+    QFile dtdFile(dtdFileFullPath);
     dtdFile.open(QFile::WriteOnly | QFile::Text);
     QTextStream stream(&dtdFile);
 
+    log("\n" + dtdFile.fileName() + "\n", Qt::GlobalColor::black, QFont::Bold);
+
     for (TEntity entity : entityCollection)
     {
+        if (m_needBreak)
+        {
+            break;
+        }
+
         if (entity.rawData)
         {
-            stream << entity.value;
+            stream << entity.value;            
             continue;
         }
 
-        writeEntity(stream, entity.id, m_webTranslatorWrapper.translate(entity.value, outputLang, inputLang));
+        log(entity.id + ":", Qt::GlobalColor::black, QFont::Normal);
+        QString outputText = m_webTranslatorWrapper.translate(entity.value, outputLang, inputLang);
+        bool error = outputText.isEmpty();
+        if (error)
+        {
+            m_translateError = true;
+            outputText = c_entityErrorValue;
+        }
+        writeEntity(stream, entity.id, outputText);
+        log(outputText + "\n", error ? Qt::GlobalColor::red : Qt::GlobalColor::blue, QFont::Normal);
     }
 }
 
-void JlDtdFileProcessorPrivate::processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang)
+void JlDtdFileProcessorPrivate::processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases)
 {
+    if (m_isProcessing)
+    {
+        throw std::runtime_error(_TQ(QObject::tr("JlDtdFileProcessorPrivate: already in process")));
+    }
+
     assert(QFile::exists(dtdFilePath) && QFileInfo::exists(dtdOutputDirPath) && !outputLangs.isEmpty() && !inputLang.isEmpty());
 
     QFile dtdFile(dtdFilePath);
@@ -140,15 +208,40 @@ void JlDtdFileProcessorPrivate::processDtdFile(const QString &dtdFilePath, const
         }
     }    
 
+    m_isProcessing = true;
+    m_translateError = false;
     for (QString outputLang : outputLangs)
     {
-        translateDtdFile(entityCollection, dtdOutputDirPath, QFileInfo(dtdFile.fileName()).fileName(), outputLang, inputLang);
+        translateDtdFile(entityCollection, dtdOutputDirPath, QFileInfo(dtdFile.fileName()).fileName(), outputLang, inputLang, outputLangPathAliases);
+        if (m_needBreak)
+        {
+            break;
+        }
     }
+
+    if (m_needBreak)
+    {
+        m_needBreak = false;
+        log(QObject::tr("Canceled by user\n"), Qt::GlobalColor::black, QFont::Bold);
+    }
+    else
+    {
+        log(QObject::tr("Done\n"), Qt::GlobalColor::black, QFont::Bold);
+    }
+
+    if (m_translateError)
+    {
+        QMessageBox::warning(qApp->activeWindow(), QObject::tr("Warning"),
+            QObject::tr("Some values cannot be translated automatically. You can find them in output files by:\n\n  ") +
+            c_entityErrorValue + QObject::tr("\n\nstring."));
+    }
+
+    m_isProcessing = false;
 }
 
 // JlDtdFileProcessor
-JlDtdFileProcessor::JlDtdFileProcessor()
-    : pimpl()
+JlDtdFileProcessor::JlDtdFileProcessor(const log_cb_t &log_cb)
+    : pimpl{ log_cb }
 {
 
 }
@@ -158,7 +251,27 @@ JlDtdFileProcessor::~JlDtdFileProcessor()
 
 }
 
-void JlDtdFileProcessor::processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang)
+bool JlDtdFileProcessor::isProcessing() const
 {
-    d->processDtdFile(dtdFilePath, dtdOutputDirPath, outputLangs, inputLang);
+    return d->m_isProcessing;
+}
+
+void JlDtdFileProcessor::processDtdFile(const QString &dtdFilePath, const QString &dtdOutputDirPath, const QStringList &outputLangs, const QString &inputLang, const StrStrMap &outputLangPathAliases)
+{
+    d->processDtdFile(dtdFilePath, dtdOutputDirPath, outputLangs, inputLang, outputLangPathAliases);
+}
+
+void JlDtdFileProcessor::breakProcess()
+{
+    if (!d->m_isProcessing || d->m_needBreak)
+    {
+        return;
+    }
+
+    d->m_needBreak = true;
+}
+
+bool JlDtdFileProcessor::isProcessBroken() const
+{
+    return d->m_needBreak;
 }

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>JL Translator Tool</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="JlTranslatorTool.qrc">
+    <normaloff>:/JlTranslatorTool/logo.ico</normaloff>:/JlTranslatorTool/logo.ico</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
@@ -67,7 +71,7 @@
     <item row="3" column="0" colspan="3">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QPushButton" name="pushButton_Process_Abort">
+       <widget class="QPushButton" name="pushButton_Process_Break">
         <property name="text">
          <string>Process</string>
         </property>
@@ -106,6 +110,8 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="JlTranslatorTool.qrc"/>
+ </resources>
  <connections/>
 </ui>
