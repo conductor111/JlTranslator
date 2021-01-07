@@ -4,6 +4,8 @@ project(JlTranslatorTool VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 
 find_package(Qt5Core)
 find_package(Qt5Widgets)
@@ -20,7 +22,8 @@ add_executable(${PROJECT_NAME} WIN32
     QSettingsDlg.ui
     MainWindow.cpp
     MainWindow.ui
-    test.cpp
+    JlTranslatorTool.qrc    
+    logo.ico
 )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core)
