@@ -13,3 +13,4 @@ ipch/
 build/
 build_root/
 TestOutput
+tmp/
