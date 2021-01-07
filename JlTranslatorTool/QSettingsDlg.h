@@ -19,16 +19,16 @@ public:
     explicit QSettingsDlg(QSettings &settings, QWidget *parent = nullptr);
     ~QSettingsDlg();
 
+    static inline const QString c_outputLangsDelimiter = ":";
+    static inline const QString c_inputLangKey = "Langs/Input";
+    static inline const QString c_outputLangsKey = "Langs/Output";
+    static inline const QString c_outputLangPathAliasesGroup = "OutputLangPathAliases/";
+
 private:
     Ui::QSettingsDlg *ui;
     QSettings& m_settings;
     std::unique_ptr<QListWidgetItem> m_currentInputLangItem;
     bool m_onChangeInputLangAddCurrentToEnabled = false;
-
-    static inline const QString c_outputLangsDelimiter = ":";
-    static inline const QString c_inputLangKey = "Langs/Input";
-    static inline const QString c_outputLangsKey = "Langs/Output";
-    static inline const QString c_outputLangPathAliasesGroup = "OutputLangPathAliases/";
 
     void initSlots();
     void initSlotsInline();
