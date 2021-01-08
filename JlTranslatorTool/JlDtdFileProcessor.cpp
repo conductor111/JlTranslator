@@ -184,7 +184,7 @@ void JlDtdFileProcessorPrivate::translateDtdFile(const EntityCollection &entityC
     dtdFile.open(QFile::WriteOnly | QFile::Text);
     QTextStream stream(&dtdFile);
 
-    log("\n" + dtdFile.fileName() + "\n", Qt::GlobalColor::black, QFont::Bold);
+    log("\n[" + outputLang + "]\n" + dtdFile.fileName() + "\n", Qt::GlobalColor::black, QFont::Bold);
 
     for (TEntity entity : entityCollection)
     {
