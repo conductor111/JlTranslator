@@ -68,7 +68,8 @@ bool JlDtdFileProcessorPrivate::isValidStartOfName(const QString name)
 
 QString& JlDtdFileProcessorPrivate::fixEntityRef(QString &str)
 {
-    QRegularExpression re(R"(&\s*#\s*([xX]?[abcdefABCDEF\d]+)\s*;)");
+    //QRegularExpression re(R"(&\s*#\s*([xX]?[abcdefABCDEF\d]+)\s*;)");
+    QRegularExpression re(R"(&\s*(#?)\s*([lLgG]t|[aA]mp|[nN]bsp|[qQ]uot|[aA]pos|[cC]ent|[pP]ound|[yY]en|[eE]uro|[cC]opy|[rR]eg|[xX]?[abcdefABCDEF\d]+)\s*;)");
     QRegularExpressionMatchIterator matchIterator = re.globalMatch(str);
 
     std::stack<QRegularExpressionMatch> matches;
@@ -80,7 +81,9 @@ QString& JlDtdFileProcessorPrivate::fixEntityRef(QString &str)
     while (!matches.empty())
     {
         const QRegularExpressionMatch &match = matches.top();
-        str.replace(match.capturedStart(), match.capturedLength(), "&#" + match.capturedRef(1)+ ";");
+        QString captured = match.captured(2);
+        captured[0] = captured[0].toLower();
+        str.replace(match.capturedStart(), match.capturedLength(), "&" + match.captured(1) + captured + ";");
         matches.pop();
     }
 
