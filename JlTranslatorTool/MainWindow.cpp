@@ -268,9 +268,13 @@ void MainWindow::log(const QString& text, const QColor &textColor, int fontWeigh
         return;
     }
 
+    ui->textEdit_Log->moveCursor(QTextCursor::MoveOperation::End);
     ui->textEdit_Log->setTextColor(textColor);
     ui->textEdit_Log->setFontWeight(fontWeight);
-    ui->textEdit_Log->append(text);
+    //ui->textEdit_Log->append(text);    
+    ui->textEdit_Log->insertPlainText(text + "\n");
+    ui->textEdit_Log->moveCursor(QTextCursor::MoveOperation::End);
+    ui->textEdit_Log->ensureCursorVisible();
 
     //std::cerr << text.toStdString() << std::endl;
 }
