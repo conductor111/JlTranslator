@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <map>
+#include <stack>
 
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
 #include <QMessageBox>
 #include <QApplication>
+#include <QRegularExpression>
 
 #include "StringUtil.h"
 #include "JlWebTranslatorWrapper.h"
@@ -51,6 +53,8 @@ class JlDtdFileProcessorPrivate
     void writeEntity(QTextStream &stream, const QString &id, const QString &value);
     const QString& outputLangPath(const QString& outputLang, const JlDtdFileProcessor::StrStrMap &outputLangPathAliases);
 
+    static QString& fixHexEntityRef(QString &str);
+
     friend class JlDtdFileProcessor;
 
 public:
@@ -60,6 +64,27 @@ public:
 bool JlDtdFileProcessorPrivate::isValidStartOfName(const QString name)
 {
     return name[0] == '_' || name[0].isLetter();
+}
+
+QString& JlDtdFileProcessorPrivate::fixHexEntityRef(QString &str)
+{
+    QRegularExpression re(R"(&\s*#\s*([abcdefABCDEF\d]+)\s*;)");
+    QRegularExpressionMatchIterator matchIterator = re.globalMatch(str);
+
+    std::stack<QRegularExpressionMatch> matches;
+    while (matchIterator.hasNext())
+    {
+        matches.push(matchIterator.next());
+    }
+
+    while (!matches.empty())
+    {
+        const QRegularExpressionMatch &match = matches.top();
+        str.replace(match.capturedStart(), match.capturedLength(), "&#" + match.capturedRef(1)+ ";");
+        matches.pop();
+    }
+
+    return str;
 }
 
 bool JlDtdFileProcessorPrivate::parseDocType(const QString &data, EntityCollection &entityCollection)
@@ -181,6 +206,10 @@ void JlDtdFileProcessorPrivate::translateDtdFile(const EntityCollection &entityC
         {
             m_translateError = true;
             outputText = c_entityErrorValue;
+        }
+        else
+        {
+            fixHexEntityRef(outputText);
         }
         writeEntity(stream, entity.id, outputText);
         log(outputText + "\n", error ? Qt::GlobalColor::red : Qt::GlobalColor::blue, QFont::Normal);
