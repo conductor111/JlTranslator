@@ -1,0 +1,2 @@
+This program uses the Qt5 library.
+https://www.qt.io/
