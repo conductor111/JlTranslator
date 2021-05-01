@@ -12,7 +12,7 @@
 
 typedef std::function<void(const QString& text, const QColor &textColor, int fontWeight)> log_cb_t;
 
-class JlDtdFileProcessor : public pimpl<class JlDtdFileProcessorPrivate, log_cb_t>
+class JlDtdFileProcessor : public pimpl<class JlDtdFileProcessorPrivate>
 {
 public:    
     JlDtdFileProcessor(const log_cb_t &log_cb);

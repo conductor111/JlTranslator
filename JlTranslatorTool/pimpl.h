@@ -2,11 +2,12 @@
 
 #include <memory>
 
-template<typename T, typename... A>
+template<typename T>
 class pimpl
 {
 public:
-    pimpl(A... a) : d{new T(a...)} {}
+    template<typename... Arg>
+    pimpl(Arg&&... arg) : d{new T(std::forward<Arg>(arg)...)} {}
 protected:
     std::unique_ptr<T> d;
 };
