@@ -7,7 +7,7 @@ class pimpl
 {
 public:
     template<typename... Arg>
-    pimpl(Arg&&... arg) : d{new T(std::forward<Arg>(arg)...)} {}
+    pimpl(Arg&&... arg) : d{ new T(std::forward<Arg>(arg)...) } {}
 protected:
     std::unique_ptr<T> d;
 };
